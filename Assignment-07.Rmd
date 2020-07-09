@@ -1,0 +1,16 @@
+---
+title: "Assignment-07"
+output: html_document
+---
+
+```{r setup, echo = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(kableExtra)
+```
+
+```{r gimmeData}
+if(!file.exists("./raw_data/US_MAP_DATA.csv")) {
+  wget(url = "https://www.github.com/luekenm/Assignment-07/raw_data/US_MAP_DATA.csv", destfile = "./raw_data/US_MAP_DATA.csv")
+}
