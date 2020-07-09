@@ -12,5 +12,6 @@ library(kableExtra)
 
 ```{r gimmeData}
 if(!file.exists("./raw_data/US_MAP_DATA.csv")) {
-  wget(url = "https://www.github.com/luekenm/Assignment-07/raw_data/US_MAP_DATA.csv", destfile = "./raw_data/US_MAP_DATA.csv")
+  wget(url = "https://raw.githubusercontent.com/luekenm/Assignment-07/master/raw_data/US_MAP_DATA.csv", destfile = "./raw_data/US_MAP_DATA.csv")
 }
+```
