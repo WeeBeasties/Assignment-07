@@ -4,14 +4,64 @@ output: html_document
 ---
 
 ```{r setup, echo = FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 
 library(tidyverse)
 library(kableExtra)
+library(HelpersMG)
+library(choroplethr)
+library(choroplethrMaps)
+library(devtools)
+if(!require("fipswranglerr", character.only = TRUE)) {
+  devtools::install_github("luekenm/fipswranglerr")
+}
+library(fipswranglerr)
 ```
 
-```{r gimmeData}
+```{r stupidCDCBlobLink, results = "hide"}
 if(!file.exists("./raw_data/US_MAP_DATA.csv")) {
   wget(url = "https://raw.githubusercontent.com/luekenm/Assignment-07/master/raw_data/US_MAP_DATA.csv", destfile = "./raw_data/US_MAP_DATA.csv")
 }
 ```
+
+```{r badHeader}
+text <- read_lines("./raw_data/US_MAP_DATA.csv")
+text = text[-(1:2)]
+read_csv(text) %>%
+  select(State = fips, Total_Deaths = `Total Death`) %>%
+  mutate(State = fipsColumnTranslator(State, "fips", "name")) %>%
+  filter(State != 0) %>%
+  write_csv("./output/deaths_by_state.csv")
+```
+
+```{r normanRockwell}
+text <- read_lines("./raw_data/US_MAP_DATA.csv")
+text = text[-(1:2)]
+read_csv(text) %>%
+  select(State = fips, Deaths_per_100000 = Death_100k) %>%
+  mutate(State = fipsColumnTranslator(State, "fips", "name")) %>%
+  filter(State != 0) %>%
+  write_csv("./output/normalized_deaths_by_state.csv")
+```
+
+```{r coelacanth}
+read_csv("./output/deaths_by_state.csv") %>%
+  rename(region = State, value = Total_Deaths) %>%
+  as.data.frame() %>%
+  state_choropleth(title = "Total COVID Deaths",
+                   legend = "Deaths",
+                   num_colors = 1)
+```
+
+* What is your interpretation of this plot?
+
+```{r}
+read_csv("./output/normalized_deaths_by_state.csv") %>%
+  rename(region = State, value = Deaths_per_100000) %>%
+  as.data.frame() %>%
+  state_choropleth(title = "Total COVID Deaths",
+                   legend = "Deaths",
+                   num_colors = 5)
+```
+
+* What is your interpretation of this plot?
