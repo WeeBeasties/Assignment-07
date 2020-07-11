@@ -1,0 +1,120 @@
+---
+title: "Assignment-07"
+author: "Mitch Lueken"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+
+library(tidyverse)
+library(kableExtra)
+library(HelpersMG)
+library(choroplethr)
+library(choroplethrMaps)
+library(devtools)
+if(!require("fipswranglerr", character.only = TRUE)) {
+  devtools::install_github("luekenm/fipswranglerr")
+}
+library(fipswranglerr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r stupidCDCBlobLink, results = "hide"}
+if(!file.exists("./raw_data/US_MAP_DATA.csv")) {
+  wget(url = "https://raw.githubusercontent.com/luekenm/Assignment-07/master/raw_data/US_MAP_DATA.csv", destfile = "./raw_data/US_MAP_DATA.csv")
+}
+```
+
+```{r badHeader}
+text <- read_lines("./raw_data/US_MAP_DATA.csv")
+text = text[-(1:2)]
+read_csv(text) %>%
+  select(State = fips, Total_Deaths = `Total Death`) %>%
+  mutate(State = fipsColumnTranslator(State, "fips", "name")) %>%
+  filter(State != 0) %>%
+  write_csv("./output/deaths_by_state.csv")
+```
+
+```{r normanRockwell}
+text <- read_lines("./raw_data/US_MAP_DATA.csv")
+text = text[-(1:2)]
+read_csv(text) %>%
+  select(State = fips, Deaths_per_100000 = Death_100k) %>%
+  mutate(State = fipsColumnTranslator(State, "fips", "name")) %>%
+  filter(State != 0) %>%
+  write_csv("./output/normalized_deaths_by_state.csv")
+```
+
+```{r coelacanth, fig.cap = "**Figure 1:** Total COVID Deaths as of 2020-07-08", fig.width = 10}
+choro <- read_csv("./output/deaths_by_state.csv") %>%
+  rename(region = State, value = Total_Deaths) %>%
+  as.data.frame() %>%
+  StateChoropleth$new()
+choro$title = "Total COVID Deaths"
+choro$show_labels = FALSE
+choro$set_num_colors(5)
+choro$ggplot_scale = scale_fill_brewer(type = "seq", palette = 18, name = "Total Deaths", drop = FALSE)
+choro$render()
+```
+
+* This map shows how hard hit the BosWash megalopolis has been, as well as the relative serenity of the interior. However, it too closely resembles a population map to be of much use.
+
+---
+
+```{r compsognathus, fig.cap = "**Figure 2:** Total COVID Deaths per 100000 Residents as of 2020-07-08", fig.width = 10}
+choro <- read_csv("./output/normalized_deaths_by_state.csv") %>%
+  rename(region = State, value = Deaths_per_100000) %>%
+  as.data.frame() %>%
+  StateChoropleth$new()
+choro$title = "Population-Adjusted COVID Deaths"
+choro$show_labels = FALSE
+choro$set_num_colors(5)
+choro$ggplot_scale = scale_fill_brewer(type = "seq", palette = 18, name = "Total Deaths\nper 100000", drop = FALSE)
+choro$render()
+```
+
+* This map makes it more clear where things are the worst. However, the fact that it still seems similar to a population map suggests a correlation between population *density* and severity of COVID.
+
+---
+
+```{r denseMacabre, fig.cap = "**Figure 3:** Population Density in 2010", fig.width = 10}
+choro <- read_csv("./raw_data/pop_density_2010.csv") %>%
+  rename(value = population_density_2010) %>%
+  as.data.frame() %>%
+  StateChoropleth$new()
+choro$title = "Population Density"
+choro$show_labels = FALSE
+choro$set_num_colors(5)
+choro$ggplot_scale = scale_fill_brewer(type = "seq", palette = 5, name = "People/sq mi", drop = FALSE)
+choro$render()
+```
+
+* This population density map is not identical to figures 1 or 2, but it is definitely not dissimilar.
+
+---
+
+```{r chloroplast, fig.cap = "**Figure 4:** Difference between COVID Deaths per 100000 Residents percentile and 2010 Population Density percentile as of 2020-07-08.", fig.width = 10}
+choro <- read_csv("./output/normalized_deaths_by_state.csv") %>%
+  rename(region = State) %>%
+  left_join(read_csv("./raw_data/pop_density_2010.csv")) %>%
+  mutate(perDeaths = percent_rank(Deaths_per_100000), perDense = percent_rank(population_density_2010), difPer = 100 * (perDeaths - perDense)) %>%
+  select(region, value = difPer) %>%
+  as.data.frame() %>%
+  StateChoropleth$new()
+choro$title = "Population-Adjusted Deaths compared to Population Density"
+choro$show_labels = FALSE
+choro$set_num_colors(5)
+choro$ggplot_scale = scale_fill_brewer(type = "seq", palette = 12, name = "Difference between\nDeaths per\n100k percentile\nand Population\nDensity percentile", drop = FALSE)
+choro$render()
+```
+
+* Each state's percentile ranking for both population density and population-adjusted COVID deaths was calculated, and their difference taken.
+* Given the density-dependent spread of COVID, *ceteris paribus*, a state's population density and it's per capita deaths from COVID *should be* roughly correlated.
+* For this comparison, a difference score near zero shows states with non-disproportionate spread of COVID. States with more negative scores have suffered less than expected, and states with larger scores have been harder hit than expected.
+* The large proportion of states with differences between +- 20 percent suggests this line of thinking isn't totally flawed. Probably.
+* This unusual map suggests that the interior has, perhaps, been harder hit than it should have been, when you consider that social distancing is a lot easier when there's less than 20,000 COVID incubators/sq mile.
