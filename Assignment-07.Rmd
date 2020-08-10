@@ -3,7 +3,7 @@ title: "Assignment-07"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 library(tidyverse)
 library(kableExtra)
@@ -14,9 +14,52 @@ library(dplyr)
 library(ggplot2)
 ```
 
-```{r Step 1}
-The_Data <- read_csv()
+```{r Step 3, message = FALSE, echo = FALSE}
+The_Data <- read_csv("raw_data/US_MAP_DATA.csv", skip = 2)
 
+deathData <- The_Data %>% 
+        rename(Deaths = "Total Death") %>%
+        filter(fips < 57, abbr != "US") %>%
+        summarise(region = str_to_lower(jurisdiction), value = Deaths)
+
+```
+
+```{r Step 4, message = FALSE, echo = FALSE}
+
+rateData <- The_Data %>% 
+        filter(fips < 57, abbr != "US") %>%
+        summarize(region = str_to_lower(jurisdiction), value = RatePer100000)
 
 
 ```
+
+
+```{r Step 5, message = FALSE, echo = FALSE}
+
+
+state_choropleth(deathData, title = "Total Deaths due to COVID", legend = "Deaths")
+
+```
+<br/>
+<br/>
+
+### Interpretation
+
+Looking at this beautiful map I created, a couple things are evident. Firstly, states with higher populations (eg California, Texas, Florida etc.) have more deaths. And likewise, states with lower populations (eg Montana, Wyoming, Maine) have the lowest deaths on the graph. A very strong correlation i'd say. 
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+```{r step 6, message = FALSE, echo = FALSE}
+
+state_choropleth(rateData, title = "Total Deaths Normalized", legend = "Deaths")
+
+```
+<br/>
+<br/>
+
+### Interpretation 
+
+Looking at this second beautiful map I created, I can see state colors have changed in comparison to the pervious map. For instance, California is much lighter and the states bordering Florida are much darker. An interesting change.
