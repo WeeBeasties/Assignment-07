@@ -1,0 +1,47 @@
+---
+title: "Assignment07"
+author: "Bethany Riess"
+date: "8/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidyr)
+library(kableExtra)
+library(ggplot2)
+library(dplyr)
+library(HelpersMG)
+library(choroplethr)
+library(choroplethrMaps)
+```
+
+```{r , message = FALSE, echo = FALSE}
+mapData <- read_csv("raw_data/US_MAP_DATA.csv", skip = 2)
+
+totalDeath <- mapData %>% 
+    	filter(fips < 57, abbr != "US") %>%
+	    rename(Total_Deaths = "Total Death", State = "jurisdiction") %>%
+		summarise(region = str_to_lower(State), value = Total_Deaths) %>%
+	write_csv("output/deaths_by_state.csv")
+```
+
+```{r , message = FALSE, echo = FALSE}
+normalDeath <- mapData %>% 
+        filter(fips < 57, abbr != "US") %>%
+		rename(State = "jurisdiction", Deaths_per_100000 = "Death_100k") %>%
+        summarize(region = str_to_lower(State), value = Deaths_per_100000) %>%
+	write_csv("output/normalized_deaths_by_state.csv")
+```
+
+```{r , message = FALSE, echo = FALSE}
+state_choropleth(totalDeath, title = "Total Deaths in Each State", legend = "Deaths")
+```
+
+
+The plot above shows how many people have died from COVID-19 in each state. The plot gives a more exact number of how many people have died, but it doesn't give an idea of the density of deaths, since the population varies so greatly per state. The plot below shows how many people have died from COVID-19 in each state per 100k people. This plot gives a better idea of the portion of the population from each state who has died, instead of the overall number. For example, in the plot above you can see that more people in Texas have died of COVID-19 than in Louisiana overall, however, the plot below shows that a higher percent of Louisiana's populations has died from COVID-19 than that of Texas. 
+
+```{r Total_death, message = FALSE, echo = FALSE}
+state_choropleth(normalDeath, title = "Deaths per 100k in Each State", legend = "Deaths per 100k")
+```
